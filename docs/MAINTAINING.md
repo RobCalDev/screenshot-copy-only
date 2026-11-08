@@ -80,8 +80,8 @@ Read [the review guidelines](https://gjs.guide/extensions/review-guidelines/revi
 and [the maintainer guidance](https://gjs.guide/extensions/review-guidelines/best-practices.html).
 This project was developed with AI assistance. GNOME expects the person submitting
 it to understand the JavaScript and be able to maintain and explain it. The
-entry-point, preferences and capture-module comments retain GNOME's requested AI notice until
-the maintainer has reviewed the code and personally removes those notice lines.
+maintainer has confirmed code review; version 1.1.1 removes the personal-use
+notices from the runtime modules. Attribution and licensing remain in place.
 Do not treat a successful GitHub release as GNOME review approval.
 
 The listing text is in [GNOME-LISTING.md](GNOME-LISTING.md). Upload the runtime ZIP

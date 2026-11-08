@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.1.1
+
+- Removed personal-use submission notices after the maintainer confirmed code review.
+- Removed unnecessary metadata from the demonstration PNG without changing pixels.
+- Audited public history, release archives and publishing metadata for personal
+  or machine-specific information; retained the public RobCalDev project identity.
+- No runtime behavior changes from 1.1.0.
+
 ## 1.1.0
 
 - No copy-only keyboard shortcut is assigned by default.

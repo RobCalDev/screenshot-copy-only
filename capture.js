@@ -2,9 +2,6 @@
 // Copyright 2026 RobCalDev
 // Capture geometry and compositing adapted from GNOME Shell's js/ui/screenshot.js.
 // Copyright the GNOME Shell contributors; see NOTICE for source and attribution.
-// Generated with AI for personal use.
-// Do NOT upload to extensions.gnome.org (EGO) unless you understand JavaScript
-// and can maintain this code.
 
 import Gio from 'gi://Gio';
 import Shell from 'gi://Shell';

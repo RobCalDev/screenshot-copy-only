@@ -1,8 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Copyright 2026 RobCalDev
-// Generated with AI for personal use.
-// Do NOT upload to extensions.gnome.org (EGO) unless you understand JavaScript
-// and can maintain this code.
 
 import Adw from 'gi://Adw?version=1';
 import Gdk from 'gi://Gdk?version=4.0';

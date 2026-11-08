@@ -47,7 +47,6 @@ MAINTAINING.md, rather than this headless screen-capture check.
 
 ## Submission status
 
-The identified technical review issues are addressed. The AI personal-use
-notices remain until the maintainer has reviewed the code and personally removes
-them, as described in GNOME's maintainer guidance. No GNOME Extensions approval
-is claimed. The GitHub release can be installed independently of that review.
+This report describes version 1.1.0. The technical review issues were addressed
+in that release. The maintainer subsequently confirmed code review, and version
+1.1.1 removes the personal-use notices. No GNOME Extensions approval is claimed.

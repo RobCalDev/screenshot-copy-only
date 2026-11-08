@@ -45,5 +45,5 @@ schema XML, LICENSE and NOTICE. Development scripts and tests stay in the source
 repository. No network calls, subprocesses, telemetry or global policy changes
 are used by the extension at runtime.
 
-Submission is pending maintainer code review. The intended GNOME Extensions
-account is RobCalDev.
+Maintainer code review is complete. The intended GNOME Extensions account is
+RobCalDev. Submission and GNOME reviewer approval are still pending.

@@ -2,8 +2,10 @@
   "uuid": "screenshot-copy-only@robcaldev.github.io",
   "name": "Screenshot Copy Only",
   "description": "Copy screenshots to the clipboard without saving a file, using GNOME's native screenshot overlay. This extension writes captured PNG images to the clipboard; it does not read clipboard contents. Assign a shortcut in preferences to open Copy only mode. No shortcut is assigned by default. Print Screen keeps GNOME's normal save-and-copy behavior.",
-  "shell-version": ["51"],
+  "shell-version": [
+    "51"
+  ],
   "settings-schema": "org.gnome.shell.extensions.screenshot-copy-only",
   "url": "https://github.com/RobCalDev/screenshot-copy-only",
-  "version-name": "1.1.0"
+  "version-name": "1.1.1"
 }
