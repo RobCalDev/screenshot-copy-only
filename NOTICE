@@ -18,7 +18,3 @@ combined clipboard-and-file storage path with an in-memory clipboard-only path.
 Upstream project: https://gitlab.gnome.org/GNOME/gnome-shell
 Upstream source: https://gitlab.gnome.org/GNOME/gnome-shell/-/blob/51.1/js/ui/screenshot.js
 Upstream license: https://gitlab.gnome.org/GNOME/gnome-shell/-/blob/51.1/COPYING
-
-Development used AI assistance. The public maintainer is responsible for code
-review, release testing and ongoing maintenance.
-This is an independent project, not an official GNOME or Fedora product.

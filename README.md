@@ -16,8 +16,7 @@ normal behavior.
 
 ## Compatibility
 
-Supports **GNOME Shell 51**. The original local extension was tested on
-**Fedora Workstation 45, GNOME Shell 51.1, Wayland**. Other major GNOME releases
+Supports **GNOME Shell 51**. Tested with **GNOME Shell 51.1 on Wayland**. Other major GNOME releases
 are not currently supported. Compatibility depends on GNOME Shell’s private
 screenshot methods and must be checked for each new major release.
 
@@ -45,28 +44,16 @@ gnome-extensions prefs screenshot-copy-only@robcaldev.github.io
 
 Click **Set shortcut…**, press your chosen combination, and the change takes
 effect immediately. Escape cancels the chooser. Backspace or the clear button
-removes the shortcut. No shortcut is assigned by default, in accordance with
-GNOME’s clipboard extension review rules. Existing explicitly configured
+removes the shortcut. No shortcut is assigned by default. Existing explicitly configured
 shortcuts are preserved when updating.
 
-GNOME on Wayland discovers new local extensions at login. The GNOME Extensions
-website listing is pending; GitHub releases are the current distribution channel.
-
-If you used the original development copy, first disable it:
-
-```sh
-gnome-extensions disable screenshot-copy-only@local
-```
-
-Keep only one copy enabled so they do not compete for the same screenshot UI
-or your chosen shortcut.
+GNOME on Wayland discovers new local extensions at login.
 
 ### Install from source
 
 Clone this repository and run `bash install.sh`, then log out and back in once.
 The source installer needs Python 3, PyGObject and `glib-compile-schemas` and
-preserves your other enabled extensions. These are available in the Fedora
-Workstation environment used for development. The ZIP installation needs no
+preserves your other enabled extensions. The ZIP installation needs no
 Python or Node.js at runtime.
 
 ## Disable
@@ -109,5 +96,3 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for useful details to include.
 
 [GPL-2.0-or-later](LICENSE). The capture geometry and memory compositing are
 adapted from GNOME Shell’s screenshot implementation; see [NOTICE](NOTICE).
-Development used AI assistance. The maintainer is responsible for reviewing,
-testing and maintaining public releases. This is an independent project.

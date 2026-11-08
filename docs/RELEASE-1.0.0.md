@@ -1,28 +1,20 @@
-Screenshot Copy Only adds a clipboard-only shortcut to GNOME's native screenshot
-overlay, keeping the familiar Selection, Screen and Window controls.
+Initial release of Screenshot Copy Only.
 
-- **Ctrl + Print Screen:** copy only, with a small indicator in the overlay.
-- **Print Screen:** GNOME's usual save-and-copy behavior.
-- **Escape:** cancel and reset the capture mode.
+- Ctrl + Print Screen opens GNOME’s native screenshot overlay in copy-only mode.
+- Choose Selection, Screen or Window, then capture directly to the clipboard.
+- A small indicator shows copy-only mode.
+- Ordinary Print Screen keeps its normal save-and-copy behavior.
 
-Supported: **GNOME Shell 51**. Locally tested on Fedora Workstation 45,
-GNOME Shell 51.1, Wayland. Other GNOME versions are not supported in this release.
+Supported: **GNOME Shell 51**.
 
-Download the `.shell-extension.zip` asset and run:
+Download the `.shell-extension.zip` and install it:
 
 ```sh
-gnome-extensions install screenshot-copy-only@robcaldev.github.io.shell-extension.zip
+gnome-extensions install --force screenshot-copy-only@robcaldev.github.io.shell-extension.zip
 ```
 
-Log out and back in, then enable it:
+Log out and back in after installing or updating, then enable it:
 
 ```sh
 gnome-extensions enable screenshot-copy-only@robcaldev.github.io
 ```
-
-If you used the original development copy, disable `screenshot-copy-only@local`
-before enabling this release. The two copies use the same shortcut.
-
-The source is GPL-2.0-or-later, with attribution to GNOME Shell for the adapted
-capture logic. This release is distributed through GitHub; a GNOME Extensions
-listing has not yet been approved.

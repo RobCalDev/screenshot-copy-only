@@ -1,90 +1,69 @@
 # Maintainer guide
 
-## How the extension works
+## Architecture
 
-`extension.js` is the entry point. `enable()` obtains GNOME's existing screenshot
-interface, adds the label, connects the UI signals and a settings-change signal,
-and registers a shortcut only if the user has explicitly assigned one in
-preferences. It uses GNOME's `InjectionManager` to wrap two methods on that one
-UI instance. It does not edit GNOME's files on disk.
+`extension.js` adds a copy-only label and a user-configured shortcut to GNOME’s
+existing screenshot interface. `InjectionManager` wraps `open()` and
+`_saveScreenshot()` on `Main.screenshotUI` and restores them when disabled.
+Normal captures delegate to GNOME’s original methods.
 
-The shortcut requests copy-only mode and calls `open()`. The `open()` wrapper
-consumes that request once; other callers, including normal Print and portal
-requests, default to GNOME's usual behavior. The overlay's `closed` signal clears
-the mode. The still-image button's state controls whether the label is visible.
-Recording uses the original GNOME behavior and hides the label.
+`capture.js` reads the preview texture, selection geometry, scale and optional
+cursor data. It composites a PNG into a `Gio.MemoryOutputStream` and writes the
+bytes to `St.Clipboard`. It does not create a screenshot file or read existing
+clipboard content.
 
-The `_saveScreenshot()` wrapper delegates to GNOME's original method for normal
-captures. In copy-only mode it calls `copyScreenshot()` from `capture.js`.
-That module reads the texture already displayed in the overlay, the selection
-rectangle, monitor/window scale and optional pointer texture. It passes them to
-`Shell.Screenshot.composite_to_stream()` using a `Gio.MemoryOutputStream`, then
-puts the resulting PNG bytes into `St.Clipboard`. There is no file output API in
-this path. Errors report failure without invoking GNOME's file-saving path.
+Each activation owns a `Gio.Cancellable`. Disabling cancels that activation so
+unfinished compositor results cannot change the clipboard or show notifications.
+Re-enabling creates a new cancellable. Signals, shortcut registration, the label
+and method wrappers are cleaned up in `disable()`.
 
-`disable()` removes the shortcut, restores wrapped methods, disconnects signals,
-destroys the label and releases references. Each activation owns a
-`Gio.Cancellable`. Disable cancels it, and pending compositing results are
-discarded before any clipboard write. Completion/error notifications also
-check that activation’s cancellable; re-enabling creates a different one and
-cannot revive work from the previous activation. All dynamic setup happens in
-`enable()`, and each item has matching cleanup.
+`prefs.js` runs in the separate GTK/Adwaita preferences process. It lets users
+choose or clear a shortcut. A settings-change signal updates the Shell binding
+immediately. The schema’s default shortcut list is empty.
 
-The schema stores an initially empty shortcut list. `prefs.js` runs in the
-separate GTK/Adwaita preferences process, importing no Shell UI libraries. Its
-key chooser writes only user-selected accelerator values. A changed-setting
-signal in the Shell process registers or removes the binding immediately.
-Closing preferences disconnects its settings-change handler. The stylesheet
-styles only our label. The package script includes an explicit list of runtime files plus license notices;
-it excludes development scripts, tests, Git history and local configuration.
+## Compatibility
 
-## What needs attention on future GNOME releases
+The extension targets GNOME Shell 51 and uses private screenshot methods. Before
+adding support for another major version, compare its screenshot code with
+`open()`, `_saveScreenshot()`, window selectors, geometry, scaling, cursor data
+and panel layout. Test each capture mode before updating `shell-version`.
 
-The extension uses private screenshot UI fields/methods, so version support
-cannot be inferred from JavaScript syntax alone. Compare `open()`,
-`_saveScreenshot()`, window selectors, geometry, scaling, cursor data and panel
-layout with the new GNOME source. Test each capture mode before changing
-`shell-version`. Do not claim untested versions.
+## Checks
 
-## Verify a release
+Run `make check` for syntax, behavior, schema, installer and packaging checks.
+For manual testing:
 
-1. Run `make pack` and install its ZIP in a test session. Confirm no shortcut
-   is registered initially. Open preferences, assign Ctrl + Print, change it,
-   clear it and assign it again. Check Escape cancels the chooser and unmodified
-   Print cannot replace the normal screenshot shortcut.
-2. Check Ctrl + Print with Selection, Screen and Window. Paste each result and
-   confirm no new file appears in the screenshot directory.
-3. Test pointer on/off, fractional display scaling where available, Escape,
-   and a normal Print capture after cancelling a copy-only capture.
-4. Check normal Print still saves and copies. Check portal screenshots and
-   recording retain their normal behavior.
-5. Disable and re-enable the extension. Confirm shortcut and label cleanup,
-   including while capture compositing or overlay opening is still pending.
-   Confirm an old capture cannot write or notify after re-enabling.
-6. Check with Blur My Shell enabled, since it also touches the overlay.
+1. Enable the extension with fresh settings and confirm no shortcut is registered.
+2. Assign, change and clear a shortcut in preferences. Confirm changes apply
+   immediately and Escape cancels the chooser.
+3. Capture a selection, screen and window. Paste each image and confirm no
+   screenshot file is created.
+4. Test pointer on/off, fractional display scaling and cancellation.
+5. Confirm ordinary Print Screen still saves and copies.
+6. Check portal screenshots and screen recording.
+7. Disable and re-enable while a capture is pending. Confirm the old capture
+   cannot overwrite the clipboard or show notifications.
+8. Check compatibility with Blur My Shell.
 
-The original local UUID was `screenshot-copy-only@local`. Disable that copy before
-testing the public UUID so the two copies do not compete for the same shortcut.
-No release script automatically changes a user's active extensions.
+Optional static analysis:
 
-## GitHub releases
+```sh
+shexli dist/screenshot-copy-only@robcaldev.github.io.shell-extension.zip
+```
 
-Update `version-name` and CHANGELOG.md. Run `make pack`; compare the ZIP contents
-against `scripts/package.py`. Tag the tested commit and publish the ZIP and its
-SHA-256 checksum as GitHub release assets. CI also checks changes and builds an
-artifact. Keep tokens and account configuration outside the repository.
+Shexli 0.2.1 has a hardcoded maximum GNOME major version of 50, so it flags this
+extension’s GNOME 51 declaration. It also requests manual review of clipboard
+access. Keep supported versions accurate when interpreting analyzer findings.
 
-## GNOME Extensions review
+## Releases
 
-Read [the review guidelines](https://gjs.guide/extensions/review-guidelines/review-guidelines.html)
-and [the maintainer guidance](https://gjs.guide/extensions/review-guidelines/best-practices.html).
-This project was developed with AI assistance. GNOME expects the person submitting
-it to understand the JavaScript and be able to maintain and explain it. The
-maintainer has confirmed code review; version 1.1.1 removes the personal-use
-notices from the runtime modules. Attribution and licensing remain in place.
-Do not treat a successful GitHub release as GNOME review approval.
+Update `version-name` and CHANGELOG.md, then run `make pack`. The archive includes
+only the runtime modules, metadata, CSS, schema XML, LICENSE and NOTICE.
 
-The listing text is in [GNOME-LISTING.md](GNOME-LISTING.md). Upload the runtime ZIP
-at https://extensions.gnome.org/upload/ while signed into the intended GNOME
-Extensions account. Respond to review feedback, rebuild and upload a revised
-version when required. Keep the UUID fixed after the first public release.
+Publish the ZIP and SHA-256 checksum with a tag for the tested commit. Keep
+release notes focused on changes users need to know about. Preserve licensing
+and upstream attribution.
+
+GNOME Extensions submissions use the same ZIP. Follow the
+[review guidelines](https://gjs.guide/extensions/review-guidelines/review-guidelines.html)
+when preparing an upload.
