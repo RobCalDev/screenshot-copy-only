@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.1.2
+
+- Made settings/UI reference cleanup explicit for static analysis.
+- Ran Shexli 0.2.1 on the upload ZIP and documented the remaining clipboard
+  manual-review finding and outdated GNOME version ceiling.
+- No screenshot behavior changes.
+
 ## 1.1.1
 
 - Removed personal-use submission notices after the maintainer confirmed code review.

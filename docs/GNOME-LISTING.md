@@ -47,3 +47,8 @@ are used by the extension at runtime.
 
 Maintainer code review is complete. The intended GNOME Extensions account is
 RobCalDev. Submission and GNOME reviewer approval are still pending.
+
+Shexli 0.2.1 reports two findings on version 1.1.2: EGO-A-005 for intentional
+clipboard access (declared, write-only, no default shortcut), and EGO-M-004
+because that analyzer hardcodes a maximum GNOME major version of 50. The
+extension actually targets and was tested on GNOME Shell 51.1. See SHEXLI.md.

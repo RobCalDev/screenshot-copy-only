@@ -87,7 +87,8 @@ export default class ScreenshotCopyOnly extends Extension {
         this._hint?.destroy();
         this._hint = null;
         this._copyOnly = this._nextOpenCopyOnly = false;
-        this._settings = this._ui = null;
+        this._settings = null;
+        this._ui = null;
     }
 
     _syncShortcut() {

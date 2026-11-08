@@ -1,0 +1,22 @@
+shexli: issues_found (2 findings, 1 errors, 0 warnings)
+
+EGO-A-005  manual_review
+Direct clipboard access via `St.Clipboard.get_default()` requires reviewer scrutiny.
+
+  --> dist/screenshot-copy-only@robcaldev.github.io.shell-extension.zip:capture.js:72
+  |
+  | St.Clipboard.get_default()
+  |
+
+  = rule: extensions should not access the clipboard directly
+  = help: Review Guidelines
+    https://gjs.guide/extensions/review-guidelines/review-guidelines.html#clipboard-access-must-be-declared
+
+EGO-M-004  error
+Field `shell-version` contains invalid values, more than one development release, or implausible future releases.
+
+  --> dist/screenshot-copy-only@robcaldev.github.io.shell-extension.zip:metadata.json
+
+  = rule: metadata shell-version must only include plausible stable releases and at most one development release
+  = help: metadata.json must be well-formed
+    https://gjs.guide/extensions/review-guidelines/review-guidelines.html#metadata-json-must-be-well-formed
