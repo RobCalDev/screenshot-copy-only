@@ -1,0 +1,24 @@
+Screenshot Copy Only
+Copyright 2026 RobCalDev
+License: GPL-2.0-or-later
+
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free Software
+Foundation, either version 2 of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE. See LICENSE for the GNU General Public License.
+
+The capture parameter extraction and memory compositing in capture.js are
+adapted from GNOME Shell's js/ui/screenshot.js, copyright the GNOME Shell
+contributors, distributed under GPL-2.0-or-later. The adaptation replaces the
+combined clipboard-and-file storage path with an in-memory clipboard-only path.
+
+Upstream project: https://gitlab.gnome.org/GNOME/gnome-shell
+Upstream source: https://gitlab.gnome.org/GNOME/gnome-shell/-/blob/51.1/js/ui/screenshot.js
+Upstream license: https://gitlab.gnome.org/GNOME/gnome-shell/-/blob/51.1/COPYING
+
+Development used AI assistance. The public maintainer is responsible for code
+review, release testing and ongoing maintenance.
+This is an independent project, not an official GNOME or Fedora product.

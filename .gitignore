@@ -1,0 +1,6 @@
+schemas/gschemas.compiled
+dist/
+*.zip
+*.sha256
+__pycache__/
+*.py[cod]

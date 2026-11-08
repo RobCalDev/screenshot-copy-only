@@ -1,0 +1,9 @@
+.screenshot-copy-only-hint {
+  color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.10);
+  border-radius: 99px;
+  padding: 4px 12px;
+  margin-bottom: 8px;
+  font-size: 10pt;
+  font-weight: 600;
+}
