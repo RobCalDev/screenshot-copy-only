@@ -5,7 +5,7 @@ import {test} from 'node:test';
 
 // Load the real extension modules with desktop services replaced by observable
 // fakes. This exercises routing/cleanup without capturing the user's desktop.
-async function fixture() {
+async function fixture({shortcut = ['<Control>Print']} = {}) {
     const calls = {saved: 0, copied: [], composites: [], notifications: [], streams: []};
     class Signals {
         handlers = new Map();
@@ -22,6 +22,11 @@ async function fixture() {
             }
         }
     }
+    const settings = Object.assign(new Signals(), {
+        shortcut,
+        get_strv() { return this.shortcut; },
+        set_strv(_key, values) { this.shortcut = values; this.emit('changed::copy-only-shortcut'); },
+    });
     const texture = name => ({get_texture: () => name});
     const ui = Object.assign(new Signals(), {
         visible: false, _openingCoroutineInProgress: false,
@@ -38,7 +43,11 @@ async function fixture() {
             getCursorTexture: () => texture('window-cursor'), cursorPoint: {x: 6, y: 8},
         }]}],
         _panel: {insert_child_at_index: hint => { calls.hint = hint; }},
-        async open() { this.visible = true; },
+        async open() {
+            if (calls.openGate) await calls.openGate;
+            if (calls.openError) throw new Error('Open failed');
+            this.visible = true;
+        },
         async _saveScreenshot() { calls.saved++; },
     });
     class InjectionManager {
@@ -56,8 +65,10 @@ async function fixture() {
         screenshotUI: ui,
         wm: {
             addKeybinding: (_name, _settings, _flags, _modes, handler) => {
+                calls.bindingAttempts = (calls.bindingAttempts ?? 0) + 1;
+                if (calls.bindingFailure) return 0;
                 calls.shortcut = handler;
-                return calls.bindingFailure ? 0 : 1;
+                return 1;
             },
             removeKeybinding: () => { calls.shortcut = null; },
         },
@@ -71,11 +82,16 @@ async function fixture() {
             ActionMode: {NORMAL: 1, OVERVIEW: 2},
             Screenshot: {composite_to_stream: async (...args) => {
                 calls.composites.push(args);
+                if (calls.compositeGate) await calls.compositeGate;
                 if (calls.compositeError)
                     throw new Error('Compositor failed');
             }},
         }},
-        'gi://Gio': {default: {MemoryOutputStream: {new_resizable: () => {
+        'gi://Gio': {default: {Cancellable: class {
+            cancelled = false;
+            cancel() { this.cancelled = true; }
+            is_cancelled() { return this.cancelled; }
+        }, MemoryOutputStream: {new_resizable: () => {
             const stream = {
                 closed: false, close() { this.closed = true; },
                 is_closed() { return this.closed; }, steal_as_bytes: () => 'PNG bytes',
@@ -92,7 +108,7 @@ async function fixture() {
             Clipboard: {get_default: () => ({set_content: (...args) => calls.copied.push(args)})},
         }},
         'resource:///org/gnome/shell/extensions/extension.js': {
-            Extension: class { getSettings() { return {}; } }, InjectionManager,
+            Extension: class { getSettings() { return settings; } }, InjectionManager,
         },
         'resource:///org/gnome/shell/ui/main.js': main,
     };
@@ -118,7 +134,7 @@ async function fixture() {
     const module = await load('./extension.js');
     await module.evaluate();
     const extension = new module.namespace.default();
-    return {extension, ui, calls};
+    return {extension, ui, calls, settings};
 }
 
 test('normal Print delegates to stock saving; copy shortcut uses only memory/clipboard', async () => {
@@ -213,12 +229,105 @@ test('disable restores methods, removes shortcut, indicator and signal handlers'
     extension.disable();
 });
 
-test('shortcut registration failure rolls back all modifications', async () => {
+test('setup failure rolls back all modifications', async () => {
     const {extension, ui, calls} = await fixture();
     const originalSave = ui._saveScreenshot;
-    calls.bindingFailure = true;
-    assert.throws(() => extension.enable(), /register Ctrl/);
+    ui._panel.insert_child_at_index = () => { throw new Error('Panel failed'); };
+    assert.throws(() => extension.enable(), /Panel failed/);
     assert.equal(ui._saveScreenshot, originalSave);
-    assert.equal(calls.hint.destroyed, true);
+    assert.equal(extension._hint, null);
     assert.equal(ui.handlers.size, 0);
+});
+
+test('no default shortcut is registered; assigning, changing and clearing apply immediately', async () => {
+    const {extension, calls, settings} = await fixture({shortcut: []});
+    extension.enable();
+    assert.equal(calls.shortcut, undefined);
+    assert.equal(calls.bindingAttempts, undefined);
+    assert.equal(calls.notifications.length, 0);
+    settings.set_strv('copy-only-shortcut', ['<Control>Print']);
+    assert.equal(typeof calls.shortcut, 'function');
+    settings.set_strv('copy-only-shortcut', ['<Super>Print']);
+    assert.equal(calls.bindingAttempts, 2);
+    settings.set_strv('copy-only-shortcut', []);
+    assert.equal(calls.shortcut, null);
+    extension.disable();
+    assert.equal(settings.handlers.size, 0);
+});
+
+test('unavailable shortcut reports the problem and remains recoverable in preferences', async () => {
+    const {extension, calls, settings} = await fixture();
+    calls.bindingFailure = true;
+    extension.enable();
+    assert.equal(calls.notifications[0][0], 'Shortcut unavailable');
+    calls.bindingFailure = false;
+    settings.set_strv('copy-only-shortcut', ['<Super>Print']);
+    assert.equal(typeof calls.shortcut, 'function');
+    extension.disable();
+});
+
+test('disable during compositing prevents clipboard writes and notifications and closes stream', async () => {
+    const {extension, ui, calls} = await fixture();
+    extension.enable();
+    calls.shortcut();
+    let finish;
+    calls.compositeGate = new Promise(resolve => { finish = resolve; });
+    const capture = ui._saveScreenshot();
+    extension.disable();
+    finish();
+    await capture;
+    assert.equal(calls.copied.length, 0);
+    assert.equal(calls.notifications.length, 0);
+    assert.equal(calls.saved, 0);
+    assert.equal(calls.streams[0].closed, true);
+});
+
+test('re-enabling cannot revive a capture from the previous activation', async () => {
+    const {extension, ui, calls} = await fixture();
+    extension.enable();
+    calls.shortcut();
+    let finish;
+    calls.compositeGate = new Promise(resolve => { finish = resolve; });
+    const oldCapture = ui._saveScreenshot();
+    extension.disable();
+    extension.enable();
+    finish();
+    await oldCapture;
+    assert.equal(calls.copied.length, 0);
+    assert.equal(calls.notifications.length, 0);
+    ui.visible = false;
+    calls.shortcut();
+    await ui._saveScreenshot();
+    assert.equal(calls.copied.length, 1);
+    assert.equal(calls.notifications.length, 1);
+    extension.disable();
+});
+
+test('a compositor rejection after disable is silent and still closes the stream', async () => {
+    const {extension, ui, calls} = await fixture();
+    extension.enable();
+    calls.shortcut();
+    let reject;
+    calls.compositeGate = new Promise((_resolve, fail) => { reject = fail; });
+    const capture = ui._saveScreenshot();
+    extension.disable();
+    reject(new Error('Late compositor failure'));
+    await capture;
+    assert.equal(calls.copied.length, 0);
+    assert.equal(calls.notifications.length, 0);
+    assert.equal(calls.streams[0].closed, true);
+});
+
+test('a pending open failure after disable has no extension callbacks or notifications', async () => {
+    const {extension, calls} = await fixture();
+    extension.enable();
+    let finish;
+    calls.openGate = new Promise(resolve => { finish = resolve; });
+    calls.openError = true;
+    calls.shortcut();
+    extension.disable();
+    finish();
+    await new Promise(setImmediate);
+    assert.equal(calls.notifications.length, 0);
+    assert.equal(extension._copyOnly, false);
 });

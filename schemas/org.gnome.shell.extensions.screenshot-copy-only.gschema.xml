@@ -2,7 +2,7 @@
 <schemalist>
   <schema id="org.gnome.shell.extensions.screenshot-copy-only" path="/org/gnome/shell/extensions/screenshot-copy-only/">
     <key name="copy-only-shortcut" type="as">
-      <default>['&lt;Control&gt;Print']</default>
+      <default>[]</default>
       <summary>Open the native screenshot overlay in copy-only mode</summary>
     </key>
   </schema>

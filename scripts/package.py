@@ -8,7 +8,7 @@ import zipfile
 
 ROOT = Path(__file__).resolve().parent.parent
 FILES = (
-    'metadata.json', 'extension.js', 'capture.js', 'stylesheet.css',
+    'metadata.json', 'extension.js', 'capture.js', 'prefs.js', 'stylesheet.css',
     'schemas/org.gnome.shell.extensions.screenshot-copy-only.gschema.xml',
     'LICENSE', 'NOTICE',
 )

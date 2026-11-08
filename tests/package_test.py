@@ -3,6 +3,7 @@
 import hashlib
 import importlib.util
 import json
+import xml.etree.ElementTree as ET
 from pathlib import Path
 import tempfile
 import unittest
@@ -34,6 +35,10 @@ class PackageTest(unittest.TestCase):
                     metadata = json.loads(archive.read('metadata.json'))
                     self.assertEqual(metadata['uuid'], 'screenshot-copy-only@robcaldev.github.io')
                     self.assertEqual(metadata['shell-version'], ['51'])
+                    self.assertIn('clipboard', metadata['description'])
+                    schema = ET.fromstring(archive.read('schemas/org.gnome.shell.extensions.screenshot-copy-only.gschema.xml'))
+                    self.assertEqual(schema.find('./schema/key/default').text, '[]')
+                    self.assertIn('prefs.js', archive.namelist())
                     self.assertIn('GPL-2.0-or-later', archive.read('NOTICE').decode())
                 digest = hashlib.sha256(original).hexdigest()
                 self.assertEqual(Path(f'{bundle}.sha256').read_text(), f'{digest}  {bundle.name}\n')

@@ -9,7 +9,7 @@ if [[ "$(gnome-shell --version)" != 'GNOME Shell 51.'* ]]; then
     exit 1
 fi
 mkdir -p "$extension_dir/schemas"
-for file in metadata.json extension.js capture.js stylesheet.css LICENSE NOTICE; do
+for file in metadata.json extension.js capture.js prefs.js stylesheet.css LICENSE NOTICE; do
     install -m 644 "$project_dir/$file" "$extension_dir/$file"
 done
 install -m 644 "$project_dir/schemas/org.gnome.shell.extensions.screenshot-copy-only.gschema.xml" "$extension_dir/schemas/"
@@ -36,3 +36,4 @@ if gnome-extensions info "$extension_uuid" >/dev/null 2>&1; then
 else
     echo 'Log out and back in once to activate the new extension.'
 fi
+echo 'Open extension preferences and assign a copy-only shortcut; none is assigned by default.'

@@ -55,7 +55,9 @@ export function getCaptureParameters(ui) {
     throw new Error('No screenshot target is selected');
 }
 
-export async function copyScreenshot(ui) {
+export async function copyScreenshot(ui, cancellable) {
+    if (cancellable.is_cancelled())
+        return false;
     // Snapshot all parameters before the asynchronous compositor operation.
     const {texture, geometry, scale, cursor} = getCaptureParameters(ui);
     const [x, y, width, height] = geometry ?? [0, 0, -1, -1];
@@ -64,10 +66,15 @@ export async function copyScreenshot(ui) {
         await Shell.Screenshot.composite_to_stream(
             texture, x, y, width, height, scale,
             cursor.texture, cursor.x, cursor.y, cursor.scale, stream);
+        // Compositing itself is not cancellable. Discard its result if the
+        // extension was disabled while awaiting it, before touching the clipboard.
+        if (cancellable.is_cancelled())
+            return false;
         stream.close(null);
         const bytes = stream.steal_as_bytes();
         St.Clipboard.get_default().set_content(
             St.ClipboardType.CLIPBOARD, 'image/png', bytes);
+        return true;
     } finally {
         if (!stream.is_closed())
             stream.close(null);

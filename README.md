@@ -2,10 +2,11 @@
 
 Copy screenshots without saving a file, using GNOME’s native screenshot overlay.
 
-Press **Ctrl + Print Screen**, choose **Selection**, **Screen** or **Window**,
-then press **Enter** or click the capture button. A small **Copy only** indicator
-shows that the image will go straight to your clipboard. Release Ctrl after
-opening the overlay.
+Assign a copy-only shortcut in the extension’s preferences, then use it to choose
+**Selection**, **Screen** or **Window**.
+Press **Enter** or click the capture button. A small **Copy only** indicator
+shows that the image will go straight to your clipboard. You can release the
+shortcut keys after opening the overlay.
 
 **Print Screen** keeps GNOME’s normal save-and-copy behavior. **Escape** cancels
 and resets the mode. Screen recordings and portal screenshots retain their
@@ -36,6 +37,18 @@ Log out and back in once, then enable it:
 gnome-extensions enable screenshot-copy-only@robcaldev.github.io
 ```
 
+Open preferences and assign a shortcut, such as **Ctrl + Print Screen**:
+
+```sh
+gnome-extensions prefs screenshot-copy-only@robcaldev.github.io
+```
+
+Click **Set shortcut…**, press your chosen combination, and the change takes
+effect immediately. Escape cancels the chooser. Backspace or the clear button
+removes the shortcut. No shortcut is assigned by default, in accordance with
+GNOME’s clipboard extension review rules. Existing explicitly configured
+shortcuts are preserved when updating.
+
 GNOME on Wayland discovers new local extensions at login. The GNOME Extensions
 website listing is pending; GitHub releases are the current distribution channel.
 
@@ -45,7 +58,8 @@ If you used the original development copy, first disable it:
 gnome-extensions disable screenshot-copy-only@local
 ```
 
-Keep only one copy enabled; both register Ctrl + Print Screen.
+Keep only one copy enabled so they do not compete for the same screenshot UI
+or your chosen shortcut.
 
 ### Install from source
 
@@ -61,8 +75,9 @@ Python or Node.js at runtime.
 gnome-extensions disable screenshot-copy-only@robcaldev.github.io
 ```
 
-Disabling removes the shortcut and indicator and restores the original screenshot
-methods. To remove the installed extension after disabling it:
+Disabling removes the shortcut and indicator, restores the original screenshot
+methods, and prevents unfinished captures from writing to the clipboard or showing
+notifications after disable. To remove the installed extension after disabling it:
 
 ```sh
 gnome-extensions uninstall screenshot-copy-only@robcaldev.github.io
@@ -72,12 +87,12 @@ gnome-extensions uninstall screenshot-copy-only@robcaldev.github.io
 
 The copy-only capture path encodes the screenshot into a memory stream and puts
 its PNG bytes into GNOME’s clipboard. It does not create a screenshot file or
-save one and delete it afterward. It does not change GNOME’s global save policy.
+save one and delete it afterward. It does not read existing clipboard contents or change GNOME’s global save policy.
 Clipboard history software may independently retain copied images.
 
 ## Development
 
-Run `make check` for JavaScript syntax checks, six behavior tests, schema
+Run `make check` for JavaScript syntax checks, twelve behavior tests, schema
 validation, installer syntax validation and a packaging test. Run `make pack`
 to create a deterministic runtime ZIP and SHA-256 checksum in `dist/`.
 

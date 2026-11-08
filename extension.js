@@ -5,6 +5,7 @@
 // and can maintain this code.
 
 import Clutter from 'gi://Clutter';
+import Gio from 'gi://Gio';
 import Meta from 'gi://Meta';
 import Shell from 'gi://Shell';
 import St from 'gi://St';
@@ -20,17 +21,11 @@ export default class ScreenshotCopyOnly extends Extension {
     enable() {
         this._ui = Main.screenshotUI;
         const ui = this._ui;
-        // Fail before modifying Shell if a future release changes these APIs.
-        for (const method of ['open', '_saveScreenshot', '_getSelectedGeometry']) {
-            if (typeof ui?.[method] !== 'function')
-                throw new Error(`Unsupported screenshot interface: ${method}`);
-        }
-        if (!ui._panel || !ui._shotButton || !ui._windowSelectors)
-            throw new Error('Unsupported screenshot panel layout');
-
         this._copyOnly = false;
         this._nextOpenCopyOnly = false;
         this._injections = new InjectionManager();
+        this._cancellable = new Gio.Cancellable();
+        const cancellable = this._cancellable;
         try {
             this._hint = new St.Label({
                 text: 'Copy only',
@@ -56,26 +51,62 @@ export default class ScreenshotCopyOnly extends Extension {
                 if (!extension._copyOnly)
                     return original.apply(this, args);
                 // Never fall back to saving when a copy-only capture fails.
-                return copyScreenshot(this).then(() => {
-                    Main.notify('Screenshot copied', 'You can paste the image from the clipboard.');
+                return copyScreenshot(this, cancellable).then(copied => {
+                    if (copied && !cancellable.is_cancelled())
+                        Main.notify('Screenshot copied', 'You can paste the image from the clipboard.');
                 }).catch(error => {
+                    if (cancellable.is_cancelled())
+                        return;
                     Main.notifyError('Could not copy screenshot', error.message);
                     throw error;
                 });
             });
 
             this._settings = this.getSettings();
-            const action = Main.wm.addKeybinding(
-                SHORTCUT, this._settings, Meta.KeyBindingFlags.NONE,
-                Shell.ActionMode.NORMAL | Shell.ActionMode.OVERVIEW,
-                () => this._openCopyOnly());
-            if (action === Meta.KeyBindingAction.NONE)
-                throw new Error('Could not register Ctrl + Print Screen');
-            this._bindingAdded = true;
+            this._shortcutId = this._settings.connect(`changed::${SHORTCUT}`, () => this._syncShortcut());
+            this._syncShortcut();
         } catch (error) {
             this.disable();
             throw error;
         }
+    }
+
+    disable() {
+        this._cancellable?.cancel();
+        this._cancellable = null;
+        if (this._bindingAdded)
+            Main.wm.removeKeybinding(SHORTCUT);
+        this._bindingAdded = false;
+        if (this._shortcutId)
+            this._settings.disconnect(this._shortcutId);
+        this._shortcutId = 0;
+        this._injections?.clear();
+        this._injections = null;
+        if (this._closedId)
+            this._ui.disconnect(this._closedId);
+        if (this._shotId)
+            this._ui._shotButton.disconnect(this._shotId);
+        this._closedId = this._shotId = 0;
+        this._hint?.destroy();
+        this._hint = null;
+        this._copyOnly = this._nextOpenCopyOnly = false;
+        this._settings = this._ui = null;
+    }
+
+    _syncShortcut() {
+        if (this._bindingAdded)
+            Main.wm.removeKeybinding(SHORTCUT);
+        this._bindingAdded = false;
+        if (this._settings.get_strv(SHORTCUT).length === 0)
+            return;
+
+        const action = Main.wm.addKeybinding(
+            SHORTCUT, this._settings, Meta.KeyBindingFlags.NONE,
+            Shell.ActionMode.NORMAL | Shell.ActionMode.OVERVIEW,
+            () => this._openCopyOnly());
+        this._bindingAdded = action !== Meta.KeyBindingAction.NONE;
+        if (!this._bindingAdded)
+            Main.notifyError('Shortcut unavailable', 'Choose another shortcut in Screenshot Copy Only preferences.');
     }
 
     _openCopyOnly() {
@@ -84,7 +115,10 @@ export default class ScreenshotCopyOnly extends Extension {
             return;
 
         this._nextOpenCopyOnly = true;
+        const cancellable = this._cancellable;
         ui.open().catch(error => {
+            if (cancellable.is_cancelled())
+                return;
             this._setCopyOnly(false);
             Main.notifyError('Could not open screenshot tool', error.message);
         });
@@ -98,22 +132,5 @@ export default class ScreenshotCopyOnly extends Extension {
     _syncHint() {
         if (this._hint)
             this._hint.visible = this._copyOnly && this._ui._shotButton.checked;
-    }
-
-    disable() {
-        if (this._bindingAdded)
-            Main.wm.removeKeybinding(SHORTCUT);
-        this._bindingAdded = false;
-        this._injections?.clear();
-        this._injections = null;
-        if (this._closedId)
-            this._ui.disconnect(this._closedId);
-        if (this._shotId)
-            this._ui._shotButton.disconnect(this._shotId);
-        this._closedId = this._shotId = 0;
-        this._hint?.destroy();
-        this._hint = null;
-        this._copyOnly = this._nextOpenCopyOnly = false;
-        this._settings = this._ui = null;
     }
 }
